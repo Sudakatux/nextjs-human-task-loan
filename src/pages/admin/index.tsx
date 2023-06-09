@@ -1,15 +1,22 @@
-import { InboxLayout } from "@/components/elements/admin/InboxLayout";
+import { ReactNode, useMemo } from "react";
 import {
   orkesConductorClient,
   HumanTaskEntry,
   HumanExecutor,
 } from "@io-orkes/conductor-javascript";
+
+import { MainTitle } from "@/components/elements/texts/Typographys";
+import MainLayout from "@/components/MainLayout";
+import { Button, Box, Paper, Stack } from "@mui/material";
 import getConfig from "next/config";
 import { useRouter } from "next/navigation";
 import {
+  formatDate,
   assignTaskAndClaim,
   getClaimedAndUnClaimedTasksForAssignee,
-} from "../helpers";
+} from "../../utils/helpers";
+import { TaskTable, StatusRenderer } from "@/components/elements/table/Table";
+import { OpenButton } from "@/components/elements/buttons/Buttons";
 
 export async function getServerSideProps() {
   const { publicRuntimeConfig } = getConfig();
@@ -48,7 +55,14 @@ type Props = {
   claimedTasks: HumanTaskEntry[];
 };
 
-export default function Test({
+const columnRenderer: Record<string, (n: HumanTaskEntry) => ReactNode> = {
+  Id: (t: HumanTaskEntry) => t.taskId!,
+  Date: (t: HumanTaskEntry) => formatDate(t.createdOn!),
+  "Task Name": (t: HumanTaskEntry) => t.taskName!,
+  Status: (t: HumanTaskEntry) => <StatusRenderer state={t.state!} />,
+};
+
+export default function Admin({
   conductor,
   unClaimedTasks,
   claimedTasks,
@@ -76,14 +90,22 @@ export default function Test({
     }
     router.push(`/admin/${task.taskId}`);
   };
+  const tasks = unClaimedTasks.concat(claimedTasks);
+  const columnsWithContext = useMemo(() => {
+    return {
+      ...columnRenderer,
+      Open: (t: HumanTaskEntry) => (
+        <OpenButton onClick={() => handleSelectTask(t)}>Open</OpenButton>
+      ),
+    };
+  }, [handleSelectTask]);
 
   return (
-    <InboxLayout
-      unClaimedTasks={unClaimedTasks}
-      claimedTasks={claimedTasks}
-      onSelectTicket={handleSelectTask}
-    >
-      {null}
-    </InboxLayout>
+    <MainLayout title="Loan Inbox">
+      <Stack spacing={6} justifyContent={"center"} alignItems={"center"}>
+        <MainTitle>Loan Inbox</MainTitle>
+        <TaskTable tasks={tasks} columns={columnsWithContext} />
+      </Stack>
+    </MainLayout>
   );
 }
