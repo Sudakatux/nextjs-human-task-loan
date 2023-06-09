@@ -17,16 +17,19 @@ import { FormDisplay } from "@/components/FormDisplay";
 import { GetServerSidePropsContext } from "next";
 import styles from "@/styles/Home.module.css";
 
+import { MainTitle } from "@/components/elements/texts/Typographys";
+import MainLayout from "@/components/MainLayout";
+import {
+  TaskTable,
+  StatusRenderer,
+} from "@/components/elements/table/Table";
+import { ReactNode } from "react";
+import { OpenButton } from "@/components/elements/buttons/Buttons";
+
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { publicRuntimeConfig } = getConfig();
   const clientPromise = orkesConductorClient(publicRuntimeConfig.conductor);
   const client = await clientPromise;
-  const humanExecutor = new HumanExecutor(client);
-  /* const { claimedTasks, unClaimedTasks } = */
-  /*   await getClaimedAndUnClaimedTasksForAssignee( */
-  /*     humanExecutor, */
-  /*     "approval-interim-group" */
-  /*   ); */
   const selectedTaskId = context.params?.taskId as string;
   if (selectedTaskId) {
     const selectedTask = await client.humanTask.getTask1(selectedTaskId);
@@ -89,30 +92,9 @@ export default function Test({
     Record<string, Record<string, any>>
   >(selectedTask?.predefinedInput || {});
   const [error, setError] = useState<boolean>(false);
+  console.log("selectedTask", selectedTask);
 
   const router = useRouter();
-
-  /* const handleSelectTask = async (selectedTask: HumanTaskEntry) => { */
-  /*   const { taskId, state } = selectedTask; */
-  /*   let task = selectedTask; */
-  /**/
-  /*   const client = await orkesConductorClient(conductor); */
-  /*   if (state === "ASSIGNED") { */
-  /*     try { */
-  /*       const humanExecutor = new HumanExecutor(client); */
-  /*       const claimedTask = await assignTaskAndClaim( */
-  /*         humanExecutor, */
-  /*         taskId!, */
-  /*         "admin" */
-  /*       ); */
-  /**/
-  /*       task = claimedTask; */
-  /*     } catch (error: any) { */
-  /*       console.log("error", error); */
-  /*     } */
-  /*   } */
-  /*   router.replace(`/admin/${task.taskId}`); */
-  /* }; */
 
   const handleDone = async () => {
     const humanExecutor = new HumanExecutor(
@@ -150,14 +132,10 @@ export default function Test({
   }, [selectedTask]);
 
   return (
-    <>
-      <Head>
-        <title>Loan Approval</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <Paper sx={{ padding: 20 }}>
+    <MainLayout title="Loan App">
+      <Stack spacing={6} justifyContent={"center"} alignItems={"center"}>
+        <MainTitle>Loan App</MainTitle>
+        
           <FormDisplay
             key={selectedTaskId}
             template={template!}
@@ -174,8 +152,7 @@ export default function Test({
             <Button onClick={handleDone}>Done</Button>
             <Button onClick={handleUpdate}>Update</Button>
           </Stack>
-        </Paper>
-      </main>
-    </>
-  );
+      </Stack>
+    </MainLayout>
+  )
 }
